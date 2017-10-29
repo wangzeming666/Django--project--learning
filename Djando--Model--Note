@@ -1,0 +1,827 @@
+Djando--Model--Note
+
+模型是你的数据的唯一的、确定的信息源。它包含你所存储数据的必要字段和行为。通常，每个模型对应数据库中唯一的一张表。
+
+
+
+基础：
+
+## 每个模型都是django.db.models.Model的一个Python子类。
+## 模型的每个属性都表示为数据库的一个字段。
+## 通过所有这一切，Djando为你提供一个自动生成的数据库访问API；请参阅执行查询。
+
+
+
+简短示例：
+## from django.db improt models
+##
+## class Person(model.Model):
+##     first_name = models.CharField(max_length=30)
+##     last_name = models.CharField(max_length=30)
+##
+# 上面的Person模型会在数据库中创建这样一张表：
+##
+## CREATE TABLE myapp_person(
+##  				"id" serial NOT NULL PRIMARY KEY,
+##  				"first_name" varchar(30) NOT NULL,
+##  				"last_name" varchar(30) NOT NULL
+##  				);	
+##
+### first_name和last_name是模型的两个字段。每个字段都被指定成一个类属型，每个属性映射到一个数据库的列。
+
+### 为节省你的时间，Django会根据模型类的名称和包含它的应用的名称自动指定数据库表名称。一个模型的数据
+### 库表名称，由这个模型的“应用标签”（在manage.py startapp中使用的名称）和模型类名称之间
+### 加上下划线组成。
+
+### id字段是自动添加的，但这个行为可以被重写。请参见自动主键字段。
+
+### 自动创建字段
+#### 默认情况下，Django 会给每个模型添加下面这个字段：
+#### id = models.AutoField(primary_key=True)
+#### 这是一个自增主键字段。
+#### 如果你想指定一个自定义主键字段，只要在某个字段上指定primary_key=True即可。如果Django看到你显式地
+#### 设置了 Field.primary_key，就不会自动添加 id 列。
+#### 每个模型只能有一个字段指定primary_key=True（无论是显式声明还是自动添加）。
+
+### 这个例子中的CREATE TABLE SQL语句使用PostgreSQL语法格式，要注意的是Django会根据setting文件中指定的
+### 数据库类型来使用响应的SQL语句。
+
+
+
+使用模型
+
+## 定义好模型之后，接下来需要告诉Django使用这些模型。你要做的是修改配置文件中的INSTALLED_APPS设置，
+## 在其中添加models.py所在应用的名称。
+
+## 例如，如果你的应用的模型位于myapp.models(由manage.py startapp命令自动创建的结构)，INSTALLED_APPS
+## 看上去应该是：
+
+## INSTALLEN_APPS = [
+## 		#...
+## 		'myapp',
+## 		#...
+## 	]
+
+### 当你在INSTALLED_APP中添加新的应用名时，	请确保运行命令manage.py migrate, 可以实现使用
+### manage.py makemigrations 给应用生成迁移脚本。
+
+
+
+字段
+
+## 对于一个模型来说，最重要的和不可或缺的是列出该模型在数据库中定义的字段。字段由类属型指定。要注意
+## 选择的字段名称不要和models API冲突，比如save、clean或者delete。
+
+## 例如：
+## from django.db import models
+
+## class Musician(models.Model):
+## 		first_name = models.CharField(max_length=50)
+##		last_name = models.CharField(max_length=50)
+##		instrument = models.CharField(max_length=100)
+
+## class Albm(models.Model):
+##		artist = models.ForeignKey(Musician, on_delete=models.CASCADE)
+##		name = models.CharField(max_length=100)
+## 		release_date = models.DateField()
+## 		num_stars = models.IntegerField()
+
+
+
+字段类型
+
+## 模型中的每个字段都是Field子类的某个实例。Django根据字段的类型确定以下信息：
+#### 列类型，它告知数据库要存储那种数据(例如，INTERGER, VARCHAR, TEXT)。
+#### 渲染表单时使用的默认HTML widget (窗口小部件)。
+
+###### 窗口小部件
+###### 一个小部件是Django表示的HTML输入元素。 Widget 负责渲染HTML和提取GET/POST 字典中的数据。
+###### 每当你指定表单的一个字段的时候，Django 将使用适合其数据类型的默认Widget。
+###### 若要查找每个字段使用的Widget，参见Built-in Field classes文档。
+
+###### 然而，如果你想要使用一个不同的Widget，你可以在定义字段时使用widget 参数。 像这样：
+
+###### from django import forms
+
+###### class CommentForm(forms.Form):
+######     name = forms.CharField()
+######     url = forms.URLField()
+######     comment = forms.CharField(widget=forms.Textarea)
+
+###### 这将使用一个Textarea Widget来设置表单的评论 ，而不是默认的TextInput Widget。
+
+###### 许多小部件具有可选的额外参数；在字段上定义窗口小部件时可以设置它们。
+###### 可用的Widget 以及它们接收的参数，参见Built-in widgets。
+
+###### 更多小部件信息，请查看文档。
+
+#### 最低限度的验证需求，他被用在Django管理站点和自动生成的表单中。
+
+###### Django拥有数十种内置的场类型；你可以在模型字段参考中找到完整列表。如果Django内置的字段不能胜任，
+###### 你可以轻松地编写自己的字段；请参阅编写自定义的模型字段。
+
+
+
+字段选项
+
+## 每个字段都接受一组与字段有关的参数(文档在'模型字段参考'中，字段类型)。例如CharField(和它的派生类)
+## 需要max_length参数来指定VARCHAR数据库字段的大小。
+
+## 还有一些适用于所有字段的通用参数。这些参数在参考中有详细定义，这里我们只简单介绍一些最常用的:
+#### null
+#### 如果为True，Django将会把数据库中空值保存为NULL，默认为False。
+
+#### blank
+#### 如果为Ture，该字段允许为空值，默认为False。
+#### 要注意，这与null不同。null纯粹是数据库范畴，指数据库中字段内容是否允许为空，而blank是表单数
+#### 据输入验证范畴的。如果一个字段的blank=True，表单的验证将允许输入一个空值。
+#### 如果该字段的blank=False，该字段就是必须的。
+
+#### choices
+#### 由二项元组构成的一个可迭代对象(例如，列表或元组)，用来给字段提供选择项。如果设置了choice，
+#### 默认的表单将是一个选择框而不是标准的文本框，而且这个选择框的选项就是choice中的选项。
+#### 这是一个关于choices列表的例子：
+#### YEAR_IN_SCHOOL_CHOICES = (
+####		('FR', 'Freshman'),
+####		('SO', 'Sophomore'),
+####		('JR', 'Junior'),
+####		('SR', 'Senior'),
+#### 		('GR', 'Graduate'),
+#### 	 )
+#### 每个元组中的第一个元素是将被存储在数据库中的值。第二个元素将由默认窗体小部件或
+#### ModelChoiceField(处理关系的字段，默认的Widget：Select)显示。给定一个模型实例，
+#### 可以使用get_FOO_display()方法来访问选项字段的显示值。
+#### 例如：
+#### from django.db import models
+####
+#### class Person(models.Model):
+#### 	 SHIRT_SIZES = (
+####		 ('S', 'Small'),
+####		 ('M', 'Medium'),
+####		 ('L', 'Large'),
+#### 		)
+#### 	 name = models.CharField(max_length=60)
+####	 shirt_size = models.CharField(max_length=1, choices=SHIRT_SIZES)
+#### 
+#### >>> p = Person(name="Fred Flintstone", shirt_size="L")
+#### >>> p.save()
+#### >>> p.shirt_size
+#### 'L'
+#### >>> p.get_shirt_size_display()
+#### 'Large'
+
+#### default
+#### 字段的默认值。可以是一个值或者可调用对象。如果可调用，每个新对象被创建它都会被调用。
+
+#### help_text
+#### 表单部件额外显示的帮助内容。即使字段不在表单中使用，它对生成文档也很有用。
+
+#### primary_key
+#### 如果为True，那么这个字段就是模型的主键。
+#### 如果你没有指定任何一个字段的primary_key=True，Django就会自动添加一个IntegerField字段
+#### 作为主键，所以除非你想覆盖默认的主键行为，否则没有必要设置任何一个字段的primary_key=True。
+#### 详见字段生成主键字段。
+#### 主键字段是只读的。如果你在一个已存在的对象上面更改主键的值并保存，一个新的对象将会在原有
+#### 对象之外创建出来。例如：
+#### from django.db import models
+#### 
+#### class Fruit(models.Model):
+####     name = models.CharField(max_length=100, primary_key=True)
+####
+#### >>> fruit = Fruit.objects.create(name='Apple')
+#### >>> fruit.name = 'Pear'
+#### >>> fruit.save()
+#### >>> Fruit.objects.values_list('name', flat=True)
+#### <QuerySet ['Apple', 'Pear']
+
+#### unique
+#### 如果为True，则这个字段在整张表中必须是唯一的。
+
+## 这些仅仅是常用字段的简短介绍，要了解详细内容，请查看通用模型字段选项参考。
+
+
+
+自动主键字段
+
+## 默认情况下，Django会给每个模型添加下面这个字段：
+## id = models.AutoField(primary_key=True)
+## 这是一个自增主键字段。
+
+## 如果你想指定一个自定义主键字段，只要在某个字段上指定primary_key=True即可。如果Django看到你显示的
+## 设置了Field.primary_key，就不会自动添加id列。
+
+## 每个模型只能有一个字段指定primary_key=True(无论是显示声明还是自动添加)。
+
+
+
+字段的自述名
+
+## 除ForeignKey、ManyToManyField和OneToField之外，每个字段类型都接受一个可选的位置参数(在第一的
+## 位置) —— 字段的自述名。
+
+## 如果没有给定自述名，Django将根据字段的属性自动创建自述名 —— 将属性名称的下划线替换成空格。
+
+## 在这个例子中，自述名是"person's first name":
+## first_name = models.CharField("person's first name", max_length=30)
+
+## 在这个例子中，自述名是"frist name":
+## first_name = models.CharField(max_length)
+
+## ForeignKey、ManyToManyField和OneToOneField都要求第一个参数是一个模型类，所以要使用
+## verbose_name关键字参数才能指定自述名：
+
+## poll = models.ForeignKey(
+##      Poll,
+## 	    on_delete=modles.CASCADE,
+##		verbose_name="the related poll",
+## 	)
+## sites = models.ManyToManyField(Site, verbose_name="list of sites")
+## place = models.models.OneToOneField(
+## 		Place,
+##		on_delete=moleds.CASCADE,
+## 		verbose_name="related place",
+## 	)
+
+## 习惯上，verbose_name的首字母不用大写。Django在必要的时候会自动大写字母。
+
+
+
+关系
+
+## 显然，关系数据库的威力体现在表之间的相互关联。Django提供了三中最常见的数据库关系：
+## 多对一(many-to-one)，多对多(many-to-many)，一对一(one-to-one)。
+
+##多对一关系
+#### Django使用django.db.models.ForeignKey定义多对一关系。和使用其他Field类型一样：在模型中把它
+#### 作为一个类属型包含进来。
+#### ForeignKey 需要一个位置参数：与该模型关联的类。
+#### 比如，一辆Car有一个Manufacturer —— 但是一个Manufacturer生产很多Cars，每一辆Car只能有
+#### 一个Manufacturer —— 使用下面的定义：
+#### from django.db import models
+#### 
+#### class Manufacturer(models.Model):
+#### 	#...
+#### 	pass
+#### 
+#### class Car(models.Model):
+#### 	manufacturer = models.ForeignKey(Manufacturer, on_delete=moelds.CASCADE)
+#### 
+#### 你还可以创建递归关联关系(与自身具有多对一关系的对象)和与尚未定义的模型的关系；
+#### 有关详细信息，请参见字段参考。
+#### 
+#### 建议你用被关联的模型的小写名称作为ForeignKey字段的名字(例如，上面manufacturer)。
+#### 当然，你也可以起别的名字。例如：
+#### class Car(model.Model):
+#### 	companyj_that_makes_it = models.ForeignKey(
+#### 		Manufacturer,
+#### 		on_delete=models.CASCADE,
+####	)
+#### 	# ...
+#### 
+#### 另外：
+#### ForeignKey 字段还接受许多别的参数，在模型字段参考有详细介绍。这些选项有助于确定关系如何工作；
+#### 都是可选的。
+#### 访问反向关联对象的细节，请见反向查询关联关系的示例。
+#### 示例代码，请见多对一关联关系示例
+
+## 多对多关系
+#### ManyToManyField 用来定义多对多关系，和使用其他Field类型一样：在模型当中把他作为一个类属型
+#### 包含进来。
+#### ManyToManyField 需要一个位置参数：和该模型关联的类。
+#### 例如，一个Pizza可以有多种Topping即一种Topping也可以为与多个Pizza上，而且每个Pizza有多个topping，
+#### 下面是如何表示这个关系：
+#### from django.db import models
+#### 
+#### class Topping(models.Model):
+#### 	# ...
+#### 	pass
+#### 
+#### class Pizza(models.Model):
+#### 	#...
+####  	toppings = models.ManyToManyField(Topping)
+#### 
+#### 与ForeignKey一样，你还可以创建递归关联关系(与其自身具有多对多关系的对象)和
+#### 与尚未定义的模型的关联关系。
+####
+#### 建议你以被关联模型名称的复数形式作为ManyToManyField的名字(例如上例中的toppings)。
+#### 在哪个模型中设置ManyToManyField并不重要，在两个模型中任意选择一个即可 —— 不要两个模型都设置。
+#### 
+#### 通常，ManyToManyField字段所在的对象应该是将可以编辑的表单。在上面的例子中，Topping位于Pizza中(
+#### 而不是在 toppings里面设置pizzas的ManyToManyField字段)，因为设想一个Pizza有多种Topping比一个
+#### Topping位于多个Pizza上要更加自然。按照上面的方式，在Pizza的表单中将允许用户选择不同的Toppings。
+#### 
+#### 完整的示例请参见多对多关联关系模型示例。
+#### ManyToManyField字段还接受别的参数，在模型字段参考中有详细介绍。这些选项有助于确定关系如何工作；
+#### 都是可选的。
+
+
+
+多对多关系的额外字段
+
+## 处理类似搭配pizza和topping这样简单的多对多关系时，使用标准的ManyToManyField就可以了。但是，
+## 有时你可能需要关联数据到两个模型之间的关系上。
+##
+## 例如，有这样一个应用，他记录音乐家所属的音乐小组。我们可以用一个ManyToManyField表示小组和成员
+## 之间的多对多关系。但是，有时你可能想知道更多成员关系的细节，比如成员是何时加入小组的。
+##
+## 对于这些情况，Django允许你指定一个中介模型来定义多对多关系。你可以将其他字段放在中介模型里面。
+## 源模型的ManyToManyField字段将使用through参数指向中介模型。对于上面的音乐小组的例子，代码如下：
+## from django.db import models
+##
+## class Person(models.Model):
+##		name = models.CharField(max_length=128)
+##		
+##		def __str__(self):
+##			return self.name
+##		
+## class Group(models.Model):
+##		name = models.CharField(max_length=128)
+##		members = models.ManyToManyField(Person, through="Membership")
+## 		
+##		def __str__(self):
+##			return self.name
+##
+## class Membership(models.Model):
+## 		person = models.ForeignKey(Person, on_delete=models.CASCADE)
+##		group = models.ForeignKey(Group, on_delete=models.CASCADE)
+## 		date_joined = models.DateField()
+##		invite_reason = models.CharField(max_length=64)
+## 
+## 在设置中介模型时，要显示的指定外键并关联到多对多关系涉及的模型。这个显示声明定义两个模型之间是
+## 如何关联的。
+## 
+## 中介模型有一些限制：
+#### 中介模型必须有且只有一个外键到源模型(上面例子中的Group)，或者你必须使用
+#### ManyToManyField.through_fields显示指定Django应该在关系中使用的外键。如果你的模型中存在不止一个
+#### 外键，并且through_fields没有指定，将会触发一个无效的错误。对目标模型的外键有相同的限制(上面
+#### 例子中的Person)。(这里有一点绕，可以查一下文档，django.db.models.ManyToManyField.through_fields.)
+
+#### 对于通过中介模型与自己进行多对多关联的模型，允许存在到同一个模型的两个外键，但它们将被当作多对多
+#### 关联中一个关系的两边。如果有超过两个外键，同样你必须像上面一样指定through_fields，否则将引发一个
+#### 验证错误。
+
+#### 使用中介模型定义与自身的多对多关系时，你必须设置symmetrical=False(详见模型字段参考)。
+###### 这里给出symmetrical的文档内容：
+###### ManyToManyField.symmetrical
+###### 只用于与自身进行关联的ManyToManyField。 例如下面的模型：
+###### 
+###### from django.db import models
+###### 
+###### class Person(models.Model):
+######     friends = models.ManyToManyField("self")
+###### 当Django 处理这个模型的时候，它定义该模型具有一个与自身具有多对多关联的ManyToManyField，
+###### 因此它不会向person_set 类添加Person 属性。 Django 将假定这个ManyToManyField 字段是对称的 ——
+######  如果我是你的朋友，那么你也是我的朋友。 
+###### 如果你希望与self 进行多对多关联的关系不具有对称性，可以设置symmetrical 为False。 
+###### 这会强制让Django 添加一个描述器给反向的关联关系，以使得ManyToManyField 的关联关系不是对称的。
+######
+######## 这里的关系不同于数据库的关系，给出ORM的概念。可能有所关联：
+######## 对象-关系映射（OBJECT/RELATION MAPPING，简称ORM），是随着面向对象的开发方法发展而产生的。
+######## 面向对象的开发方法是当今级应用开发环境中的主流开发方法，关系数据库是级应用环境中永久存放数据的
+######## 主流数据存储系统。
+######## 对象和关系数据是业务实体的两种表现形式，业务实体在内存中表现为对象，在数据库中表现为关系数据。
+######## 内存中的对象之间存在关联和继承关系，而在数据库中，关系数据无法直接表达多对多关联和继承关系。
+######## 因此，对象-关系映射(ORM)系统一般以中间件的形式存在，主要实现程序对象到关系数据库数据的映射。
+######## 面向对象是从工程基本原则(如耦合、聚合、封装)的基础上发展起来的，而关系数据库则是从数学理论发展
+######## 而来的，两套理论存在显著的区别。
+######## 为了解决这个不匹配的现象,对象关系映射技术应运而生。
+
+##既然你已经设置好ManyToManyField来使用中介模型(在这个例子中就是Membership)，接下来你要开始创建多对多关系。
+## 你要做的就是创建中介模型的实例：
+## >>> ringo = Person.objects.create(name="Ringo Starr")
+## >>> paul = Person.objects.create(name="Paul McCarrtney")
+## >>> beatles = Group.objects.create(name="The Beatles")
+## >>> ml = Membership(person=ringo, group=beatles,
+## ... 	date_joined=date(1962, 8, 16),
+## ... 	invite_reason="Needed a new drummer.")
+## >>> ml.save()
+## >>> beatles.members.all()
+## <QuerySet [<Group: Ringo Starr>]>
+## >>> ringo.group_set.all()
+## <QuerySet [<Group: The Beatles>]>
+## >>> m2 = Membership.objects.create(person=paul, group=beatles,
+## ... 	date_joined=date(1960, 8, 1),
+## ... 	invite_reason="Wanted to form a band.")
+## >>> beatles.members.all()
+## <QuerySet [<Person: Ringo Starr>, <Person: Paul MoCartney>]>
+##
+## 与常规的多对多字段不同，不能使用add()，create()或set()创建关系：
+## >>> # The following statements will not work
+## >>> beatles.members.add(john)
+## >>> beatles.members.create(name="George Harrison")
+## >>> beatles.members.set([john, paul, ringo, george])
+##
+## 为什么不能这样做？这是因为你不能只创建Membership和Group之间的关联关系，你还要指定Person模型中所需要的
+## 所有信息；
+
+#########################  下面一大块内容可能不太用得到，暂时跳过。
+
+
+
+Meta选项
+
+## 使用内部的class Meta定于模型的元数据，例如：
+## from django.db import models
+##
+## class Ox(models.Model):
+## 		horn_length = models.IntegerField()
+##
+##		class Meta:
+##			ordering = ["horn_length"]
+## 			verbose_name_plural = "oxen"
+##
+## 模型元数据是"任何不是字段的数据"，比如排序选项(ordering)，数据库表名(db_table)或者人类可读的单复数名称
+## (verbose_name和verbose_name_plural)。在模型中添加class Meta是完全可选的，所有选项都不是必须的。
+##
+## 所有Meta选项的完整列表可以在模型选项参考中找到。
+
+
+
+模型属性
+
+## objects
+## django.db.models.Model.objects
+## 每个非抽象的Model类必须给自己添加一个Manager实例。Django确保在你的模型类中至少有一个默认的Manger。
+## Django确保在你的模型类中至少有一个默认的Manger。如果你没有添加自己的管理器，Django将添加一个属性objects，
+## 它包含默认的管理器实例。如果你自己添加的属性有一个是管理器实例，则默认的管理器不会出现。
+## 思考一下下面的例子：
+## from django.db import models
+## class Person(models.Model):
+## 		# 添加具有另外一个名称的管理器
+##  	people = models.Manager()
+## 关于模型管理器的更多信息，参见管理器和获取对象。
+##
+## 模型最重要的属性是Manager。它是Django模型进行数据库查询操作的接口，并用于从数据库提取实例。如果没有
+## 自定义Manager，则默认的名称为objects。Managers只能通过模型类访问，而不能通过模型实例访问。
+##
+######## 管理器
+########
+########## class Manager
+########## Manager是Django的模型进行数据库查询操作的接口。Django应用的每个模型都拥有至少一个Manager。
+########## Manager类的工作方式的文档在执行查询中；这页文档设计用于自定义管理其行为的模型选项。
+########## 
+############## 创建对象
+############## Django使用一种直观的方式把数据库表中的数据表示成Python对象：一个模型类代表数据库中的一个表，
+############## 一个模型类的实例代表这个数据库表中的一条特定的记录。
+############## 使用关键字参数实例化模型实例来创建一个对象，然后调用save()把它保存到数据库中。
+############## 
+############## 文档中使用一个在官网文档中存在的模型，没有写在这里，但下述例子使用了它。
+############## 假设模型存放于文件mysite/blog/models.py中，下面是一个例子：
+############## >>> from blog.models import Blog
+############## >>> b = Blog(name='Beatles Blog', tagline='Alll the latest Beatles news')
+############## 
+############## 上面的代码在背后执行了SQL的INSERT语句。在你显示调用save()之前，Django不会访问数据库。
+############## 
+############## save()方法没有返回值。
+############## save()方法有一些高级选型，完整的细节请见save()文档。
+############## 如果你想只用一条语句并创建一个对象，使用create()方法
+############## 
+############## 要保存对数据库中已存在的对象的改动，请使用save()。
+############## 
+############## 假设Blog的一个实例b5已经被保存在数据库中，下面这个例子将更改它的name并且更新数据库中的记录：
+############## >>> b5.name = 'New name'
+############## >>> b5.save()
+############## 
+############## 上面的代码在背后执行SQL的UPDATE语句。在你现实的调用save()之前，Django不会访问数据库。
+############## 
+############## 
+############## 
+############## 检索对象
+############## 通过模型的Manager构造一个QuerySet，来从你的的数据库中获取对象。
+############## 
+############## QuerSet表示从数据库中取出来的对象的集合。它可以含有零个、一个或多个过滤器。过滤器基于
+############## 所给的参数限制查询的结果。从SQL的角度，QuerySet和WHERE语句等价，过滤器是像SELECT和
+############## LIMIT一样的限制子句。
+############## 
+############## 你可以从模型的Manager哪里取得QuerySet。每个模型都至少有一个Manager，它默认命名为objects。
+############## 通过模型类来直接访问它，像这样：
+############## >>> Blog.objects
+############## 
+############## >>> b = Blog(name='Foo', tagline='Bar')
+############## >>> b.objects
+############## Traceback:
+##############     ...
+############## AttributeError: "无法通过博客实例访问管理器"
+############## 
+############## 注：Managers只可以通过模型的类访问，而不可以通过模型的实例访问，目的是为了强制区分
+############## "表级别"的操作和"记录级别"的操作。
+############## 
+############## 对于一个模型来说，Manager是QuerySets的主要来源。例如，Blog返回包含数据库中所有
+############## Blog.objects.all()对象的一个QuerySet。
+############## 
+############## 
+############## 检索所有对象
+############## 获取一个表中所有对象的最简单的方式是全部获取。可以使用Manager的all()方法：
+############## >>> all_enteries = Entry.objects.all()
+############## 
+############## all()方法返回包含数据库中所有对象的一个QuerySet。
+############## 
+############## 
+############## 使用过滤器检索特定对象
+############## all()方法返回了一个包含数据库表中所有记录的QuerySet。但在通常情况下，你往往想要获取的是
+############## 完整数据集的一个子集。
+############## 
+############## 要创建这样的一个子集，你需要在原始的QuerySet上增加一些过滤条件。QuerySet两个最普遍的途径是：
+################## filter(**kwargs)
+################## 返回一个新的QuerySet，它包含满足查询参数的对象。
+################## exclude(**kwargs)
+################## 返回一个新的QuerySet，它包含不满足查询参数的对象。
+################## 
+################## 查询参数(上面函数定义中的**kwargs)需要满足特定的格式，下面字段查询一节中会提到。
+################## 举个例子，要获取年份为2006的所有文章的QuerySet，可以使用filter()方法：
+################## Entry.objects.filter(pub_date__year=2006)
+################## 利用默认的管理器，他相当于：
+################## Entry.objects.all().filter(pub_date__year=2006)
+################## 
+############## 链接过滤器
+############## QuerySet的筛选结果本身还是QuerySet，所以可以将筛选语句链接在一起。像这样：
+############## >>> Entry.objects.filter(
+############## ... 		headline__startswith='What').exclude(
+############## ... 		pub_date__gte=datetime.date.today().filter(
+############## ...		pub_date__gte=datetime.(2005, 1, 30))
+############## 这个例子最开始获取数据库中所有对象的一个QuerySet，之后增加一个过滤器，然后又增加一个排除，
+############## 再之后又是另外一个过滤器。最后的结果仍然是一个QuerySet，它包含标题以"What"开头、发布日期在2005年1月30日
+############## 至当天之间的所有记录。
+############## 
+############## 
+############## 已过滤的QuerySet是唯一的
+############## 每次你筛选一个QuerySet，得到的都是全新的另一个QuerySet，它和之前的QuerySet之间没有任何绑定关系。
+############## 每次筛选都会创建一个独立的QuerySet，它可以被存储及反复使用。
+############## 例如：
+############## >>> q1 = Entry.objects.filter(headline__startswith="What")
+############## >>> q2 = q1.exclude(pub_date__gte=datetime.date.today())
+############## >>> q3 = q1.filter(pub_date__gte=datetime.date.today())
+############## 这三个QuerySets都是独立的。第一个是一个基础的QuerySet，包含所有标题以"What"开头的记录。第二个查询集
+############## 是第一个的子集，它增加另外一个限制条件，排除pub_date为今天和将来的记录。第三个查询集同样是第一个的子集，
+############## 他增加另外一个限制条件，只选择pub_date为今天或将来的记录。原始的QuerySet(q1)不会受到筛选过程的影响。
+############## 
+############## 
+############## QuerySet是惰性的
+############## QuerySets是惰性执行的————创建QuerySet不会带来任何数据库的访问。你可以将过滤器保持一整天，直到QuerySet
+############## 需要求值时，Django才会真正运行这个查询。看下这个例子：
+############## >>> q = Entry.objects.filter(headline__startswith="What")
+############## >>> q = q.filter(pub_date__lte=datetime.date.today())
+############## >>> q = q.exclude(body_text__icontains="food")
+############## >>> print(q)
+############## 虽然它看上去有三次数据库访问，但事实上只有在最后一行(print(q))时才访问一次数据库。一般来说，只有在"请求"
+############## QuerySet的结果时才会到数据库中去获取它们。当你确实需要结果时，QuerySet通过访问数据库来求值。
+############## 关于求值发生的准确时间，参见QuerySets何时求值。
+############## 
+############## 
+############## 使用get()检索单个对象
+############## filter()始终给你一个QuerySet，即使只有一个对象满足查询条件————这种情况下，QuerySet将只包含一个元素。
+############## 如果你知道只有一个对象满足你的查询，你可以使用Manager的get()方法，它直接返回该对象：
+############## >>> one_entry = Entry.objects.get(pk=1)
+############## 可以对get()使用任何查询表达式，和filter()一样————内容同样请查看字段查询部分。
+############## 注意：使用get()和使用filter()的切片[0]有一点区别。如果没有结果满足查询，get()将引发一个DoesNotExist异常。
+############## 这个异常是正在查询的模型类的一个属性————所以在上面的代码中，如果没有主键为1的Entry.DoesNotExist对象，
+############## Django将引发一个Error。
+############## 类似的，如果有多条记录满足get()的查询条件，Django也将报错。这种情况将引发MultipleObjectsReturned，
+############## 它同样是模型类自身的一个属性。
+############## 
+############## 
+############## 其它QuerySet方法
+############## 大多数情况下，需要从数据库中查找对象时，你会使用all(), get(), filter, 和exclude()。然而，这远不及一切；
+############## 有关所有各种QuerySet方法的完整列表，请参阅QuerySet API Reference。
+############## 
+############## 
+############## 限制QuerySet
+############## 可以使用Python的切片语法来限制QuerySet记录的数目。它等同于SQL的OFFSET和LIMIT子句。
+############## 例如，下面的语句返回前面5个对象(LIMIT 5)：
+############## >>> Entry.objects.all()[:5]
+############## 下面这条语句返回第6至第10个对象(OFFSET 5 LIMIT 5):
+############## >>> Entry.objects.all()[5:10]
+############## 不支持负的索引(例如Entry.objects.all()[-1])
+############## 通常，QuerySet的切片返回一个新的QuerySet————它不会执行查询。有一个例外，是如果你使用Python切片语法中
+############## "step"参数。例如，下面的语法将返回前10个对象中每隔2个对象，它还将真实执行查询：
+############## >>>Entry.objects.all()[:10:2]
+############## 检索单个对象而不是列表(例如，SELECT foo FROM bar LIMIT 1)，使用简单的索引而不是切片。例如，下面的语句
+############## 返回数据库库中根据标题排序后的第一条Entry：
+############## >>> Entry.objects.order_by("headline")[0]
+############## 它大体等同于：
+############## >>> Entry.objects.order_by('headline')[0:1].get()
+############## 然而请注意，如果没有对象满足给定的条件，第一条语句将引发DoesNotExist而第二条语句将引发IndexError。
+############## 更多细节参见get()。
+############## 
+############## 
+############## 字段查找
+############## 字段查找是指如何指定SQL WHERE子句的它们通过QuerySet方法filter()、exclude()和get()的关键字参数指定。
+############## 查询的关键字参数基本形式是field__lookuptype=value。(中间是两个下划线)。像这样：
+############## >>> Entry.objects.filter(pub_date__lte="2006-01-01")
+############## 翻译成SQL(大体)是：
+############## SELECT * FROM blog_entry WHERE pub_date <= '2006-01-01':
+############## 实现原理：
+############## Python定义的函数可以接受任意的键/值对参数，这些名称和参数可以在运行时求值。更多信息，参见Python官方文档中
+############## 的Keyword Arguments。
+############## 
+############## 查询条件中制定的字段必须是模型字段的名称。但有一个例外，对于ForeignKey你可以使用字段名加上_id后缀。
+############## 在这种情况下，该参数的值应是外键的原始值。像这样：
+############## >>> Entry.objects.filter(blog_id=4)
+############## 如果你传递的是一个不合法的参数，查询函数将引发TypeError。
+############## 数据库API支持大约二十种查找类型；在field lookup reference中可以找到完整的参考。下面是常见的查询：
+################## exact
+################## "精确"匹配。像这样：
+################## >>> Entry.objects.get(headline__excat="Cat bites dog")
+################## 将生成下面的SQL：
+################## SELECT ... WHERE headline = "Cat bites dog";
+################## 如果你没有提供查询类型————即如果你的关键字参数不包含双下划线————默认假定查询类型时exact。
+################## 例如，下面的两条语句相等：
+################## >>> Blog.objects.get(id__exact=14)   # Explicit form
+################## >>> Blog.objects.get(id=14)			# __exact is implied
+################## 这是为了方便，因为exact查询是最常见的情况。
+################## 
+################## iexact
+################## 大小写不敏感的匹配。所以，查询：
+################## >>> Blog.objects.get(name__iexact="beatles blog")
+################## 将匹配标题为"Beatles Blog", "beatles blog"甚至"BeAtlES blOG"的Blog。
+################## 
+################## contains
+################## 大小写敏感的包含关系测试。像这样：
+################## Entry.objects.get(headline__contains="Lennon")
+################## 大体可以翻译成下面的SQL：
+################## SELECT ... WHERE headline LIKE '%Lennon%';
+################## 注意，这将匹配'Today Lennon honored'，但不能匹配'today lennon honored'。
+################## 还有一个大小写不敏感的版本，icontains。
+################## 
+################## startswith, endswith
+################## 分别以匹配XXX开头和以XXX结尾。当然还有大小写不敏感的版本，叫做istartswith和iendswith。
+################## 同样，这里只是表面。完整的参考可以在field lookup reference中找到。
+##############
+############## 
+############## 跨关联关系的查询
+############## Django提供一种强大而又直观的方式来"处理"查询中的关联关系，他在后台·自动帮你处理JOIN。若要跨越关联关系，
+############## 只需使用关联的模型字段的名称，并使用双下划线分割，直至你想要的字段：
+############## 下面这个例子获取所有Blog的name为'Beatles Blog'的Entry对象：
+############## >>> Entry.objects.filter(blog__name="Beatles Blog")
+############## 这种跨越可以是任意的深度。
+############## 它还可以反向工作。若要引用一个"反向"的关系，只需要使用该模型的小写的名称。
+############## 下面的示例获取所有的Blog对象，他们至少有一个Entry的headline包含'Lennon':
+############## >>> Blog.objects.filter(entry__headline__contains='Lennon')
+############## 如果你在多个关联关系过滤而且其中某个中介模型没有满足过滤条件的值，Django将会把它当做一个空的(所有值都是NULL)
+############## 但是合法的对象。这意味着不会有错误引发。例如，在下面的过滤器中：
+############## Blog.objects.filter(entry__authors__name='Lennon')
+############## (如果有一个相关联的Author模型)，如果没有author与entry管理，那么它将当作其没有name，而不会因为没有author
+############## 引发一个错误。通常，这就是你想要的。唯一可能让你困惑的是当你使用isnull的时候。因此：
+############## Blog.objects.filter(entry__authors__name__isnull=True)
+############## 返回的Blog对象包括auther的name为空的对象。如果你不需要后者，你可以这样写：
+############## Blog.objects.filter(entry__authors__isnull=False, entry__authors__name__isnull=True) 
+############## 
+############## 
+############## 跨越多值的关联关系
+############## 当你基于ManyToManyField或反向的ForeignKey来过滤一个对象时，有两种不同种类的过滤器。考虑Entry/Blog关联
+############## 关系(Blog和Entry是一对多的关系)。我们可能想找出headline为"Lennon"并且pub_date为'2008'年的Entry。或者
+############## 我们可能想查询headline为"Lennon"的Entry或者pub_date为'2008'的Entry。因为实际上有和单个Blog相关联的多个
+############## Entry，所以这两个查询在某些场景下都是有可能并有意义的。
+############## 
+############## ManyToManyField有类似的情况。例如，如果Entry有一个ManyToManyField叫做tags，我们可能想找到tag叫做"music"
+############## 和"bands"的Entry，或者我们想找一个tag名为"music"且状态为"public"的Entry。
+############## 
+############## 对于这两种情况，Django有种一致的方法来处理filter()调用。
+############## 一个filter() 调用中的所有参数会同时应用以过滤出满足所有要求的记录。 接下来的filter() 
+############## 调用进一步限制对象集，但是对于多值关系，它们应用到与主模型关联的对象，而不是应用到前一个filter() 
+############## 调用选择出来的对象。
+############## 
+############## 这些听起来可能有点混乱，所以希望展示一个例子使它变得更清晰。 
+############## 选择所有包含同时满足两个条件的entry的blog，这两个条件是headline 包含Lennon 和发表时间是2008 （同一个entry 
+############## 足两个条件），我们的代码是：
+############## Blog.objects.filter(entry__headline__contains='Lennon', entry__pub_date__year=2008)
+############## 要选择所有这样的blog，有一个entry的headline包含“Lennon”和有一个entry发表时间是2008，我们将这样编写：
+############## Blog.objects.filter(entry__headline__contains='Lennon').filter(entry__pub_date__year=2008)
+############## 假设这里有一个blog拥有一条包含'Lennon'的entries条目和一条来自2008的entries条目,但是没有一条来自2008并且包含
+############## "Lennon"的entries条目。 第一个查询不会返回任何blog，第二个查询将会返回一个blog。
+############## 
+############## 在第二个例子中， 第一个filter限定查询集为所有与headline包含“Lennon”的entry关联的blog。 
+############## 第二个filter进一步限定查询集中的blog，这些blog关联的entry 的发表时间是2008。 第二个filter 过滤出来的entry 
+############## 与第一个filter 过滤出来的entry 可能相同也可能不同。 
+############## ________划重点：我们用每个filter语句过滤的是Blog，而不是Entry。________
+############## 
+############## 注
+############## 跨越多值关系的filter() 查询的行为，与exclude() 实现的不同。 单个exclude() 调用中的条件不必引用同一个记录。
+############## 例如，下面的查询将排除两种 entry的blog，headline中包含“Lennon”的entry和在2008年发布的entry：
+############## 
+############## Blog.objects.exclude(
+##############     entry__headline__contains='Lennon',
+##############     entry__pub_date__year=2008,
+############## )
+############## 然而，这与使用filter() 的行为不同，它不是排除同时满足两个条件的Entry。 
+############## 为了实现这点，即选择的Blog中不包含在2008年发布且healine 中带有“Lennon” 的Entry，你需要编写两个查询：
+############## 
+############## Blog.objects.exclude(
+##############     entry__in=Entry.objects.filter(
+##############         headline__contains='Lennon',
+##############         pub_date__year=2008,
+##############     ),
+############## )
+############## 
+############## 
+############## 过渡器可以引用模型的字段
+############## 到目前为止给出的示例中，我们构造过将模型字段与常量进行比较的filter。 
+############## 但是，如果你想将模型的一个字段与同一个模型的另外一个字段进行比较该怎么办？
+############## Django 提供F表达式 来允许这样的比较。 F() 返回的实例用作查询内部对模型字段的引用。 
+############## 这些引用可以用于查询的filter 中来比较相同模型实例上不同字段之间值的比较。
+############## 
+############## 例如，为了查找comments 数目多于pingbacks 的Entry，我们将构造一个F() 对象来引用pingback 
+############## 数目，并在查询中使用该F() 对象：
+############## 
+############## >>> from django.db.models import F
+############## >>> Entry.objects.filter(n_comments__gt=F('n_pingbacks'))
+############## Django 支持对F() 对象使用加法、减法、乘法、除法、取模以及幂计算等算术操作，两个操作数可以都是常数和其它F() ############## 对象。 为了查找comments 数目比pingbacks 两倍还要多的Entry，我们将查询修改为：
+############## 
+############## >>> Entry.objects.filter(n_comments__gt=F('n_pingbacks') * 2)
+############## 为了查询rating 比pingback 和comment 数目总和要小的Entry，我们将这样查询：
+############## 
+############## >>> Entry.objects.filter(rating__lt=F('n_comments') + F('n_pingbacks'))
+############## 你还可以在F() 对象中使用双下划线标记来跨越关联关系。 带有双下划线的F() 对象将引入任何需要的join ############## 操作以访问关联的对象。 例如，如要获取author 的名字与blog 名字相同的Entry，我们可以这样查询：
+############## 
+############## >>> Entry.objects.filter(authors__name=F('blog__name'))
+############## 对于date 和date/time 字段，你可以给它们加上或减去一个timedelta 对象。 
+############## 下面的例子将返回发布超过3天后被修改的所有Entry：
+############## 
+############## >>> from datetime import timedelta
+############## >>> Entry.objects.filter(mod_date__gt=F('pub_date') + timedelta(days=3))
+############## F()对象支持位操作.bitand()、.bitor()、.bitrightshift()和.bitleftshift()。 例如：
+############## 
+############## >>> F('somefield').bitand(16)
+############## 在Django 1.11中的更改：
+############## 添加了对.bitrightshift()和.bitleftshift()的支持。
+############## 
+############## 
+############## pk查找快捷方式
+############## 为了方便，Django 提供一个查询快捷方式pk ，它表示“primary key” 的意思。
+############## 在id 模型示例中，主键是Blog 字段，所以下面三条语句是等同的：
+############## 
+############## >>> Blog.objects.get(id__exact=14) # Explicit form
+############## >>> Blog.objects.get(id=14) # __exact is implied
+############## >>> Blog.objects.get(pk=14) # pk implies id__exact
+############## __exact 的使用不仅限于pk 查询 —— 任何查询类型都可以与pk 结合来完成一个模型上对主键的查询：
+############## 
+############## # Get blogs entries with id 1, 4 and 7
+############## >>> Blog.objects.filter(pk__in=[1,4,7])
+############## 
+############## # Get all blog entries with id > 14
+############## >>> Blog.objects.filter(pk__gt=14)
+############## pk查询在join 中也可以工作。 例如，下面三个语句是等同的：
+############## 
+############## >>> Entry.objects.filter(blog__id__exact=3) # Explicit form
+############## >>> Entry.objects.filter(blog__id=3)        # __exact is implied
+############## >>> Entry.objects.filter(blog__pk=3)        # __pk implies __id__exact
+############## 在LIKE语句中转义百分号和下划线
+############## 与endswith SQL 语句等同的字段查询（LIKE、 istartswith、iendswith、iexact、 LIKE、startswith 
+############## 和contains）将自动转义在icontains 语句中使用的两个特殊的字符 —— 百分号和下划线。 （在LIKE 
+############## 语句中，百分号通配符表示多个字符，下划线通配符表示单个字符）。
+############## 
+############## 这意味着语句将很直观，不会显得太抽象。 
+############## 例如，要获取包含一个百分号的所有的Entry，只需要像其它任何字符一样使用百分号：
+############## 
+############## >>> Entry.objects.filter(headline__contains='%')
+############## Django照顾你的引用；生成的SQL将如下所示：
+############## 
+############## SELECT ... WHERE headline LIKE '%\%%';
+############## 对于下划线是同样的道理。 百分号和下划线都会透明地帮你处理。
+############## 
+############## 
+############## 缓存和QuerySet
+############## 每个QuerySet都包含一个缓存来最小化对数据库的访问。 理解它是如何工作的将让你编写最高效的代码。
+############## 
+############## 在一个新创建的QuerySet中，缓存为空。 首次对QuerySet进行求值 —— 同时发生数据库查询 ——Django 
+############## 将保存查询的结果到QuerySet的缓存中并返回明确请求的结果（例如，如果正在迭代QuerySet，则返回下一个结果）。 
+############## 接下来对该QuerySet 的求值将重用缓存的结果。
+############## 
+############## 请牢记这个缓存行为，因为对QuerySet使用不当的话，它会坑你的。 
+############## 例如，下面的语句创建两个QuerySet，对它们求值，然后扔掉它们：
+############## 
+############## >>> print([e.headline for e in Entry.objects.all()])
+############## >>> print([e.pub_date for e in Entry.objects.all()])
+############## 这意味着相同的数据库查询将执行两次，显然倍增了你的数据库负载。 
+############## 同时，还有可能两个结果列表并不包含相同的数据库记录，因为在两次请求期间有可能有Entry被添加进来或删除掉。
+############## 
+############## 为了避免这个问题，只需保存QuerySet并重新使用它：
+############## 
+############## >>> queryset = Entry.objects.all()
+############## >>> print([p.headline for p in queryset]) # Evaluate the query set.
+############## >>> print([p.pub_date for p in queryset]) # Re-use the cache from the evaluation.
+############## 
+############## 当QuerySet不缓存
+############## 查询集不会永远缓存它们的结果。 当只对查询集的部分进行求值时会检查缓存， 
+############## 但是如果这个部分不在缓存中，那么接下来查询返回的记录都将不会被缓存。 特别地，这意味着使用切片或索引来
+############## limiting the queryset将不会填充缓存。
+############## 
+############## 例如，重复获取查询集对象中一个特定的索引将每次都查询数据库：
+############## 
+############## >>> queryset = Entry.objects.all()
+############## >>> print(queryset[5]) # Queries the database
+############## >>> print(queryset[5]) # Queries the database again
+############## 然而，如果已经对全部查询集求值过，则将检查缓存：
+############## 
+############## >>> queryset = Entry.objects.all()
+############## >>> [entry for entry in queryset] # Queries the database
+############## >>> print(queryset[5]) # Uses cache
+############## >>> print(queryset[5]) # Uses cache
+############## 下面是一些其它例子，它们会使得全部的查询集被求值并填充到缓存中：
+############## 
+############## >>> [entry for entry in queryset]
+############## >>> bool(queryset)
+############## >>> entry in queryset
+############## >>> list(queryset)
+############## 注
+############## 简单地打印查询集不会填充缓存。 因为__repr__() 调用只返回全部查询集的一个切片。
