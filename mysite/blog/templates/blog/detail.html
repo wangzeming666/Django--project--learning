@@ -1,0 +1,15 @@
+<html>
+	<head>
+		<title>Detail</title>
+	</head>
+	<body>
+		<h1>{{ hero.hname }}</h1>
+		<h2>{{ hero.hgender }}, {{ hero.hlaunch_date }}</h2>
+		<hr/>
+		<ul>
+		{% for skin in hero.skininfo_set.all %}
+			<li>{{ skin.sname }}: {{ skin.scontent }}</li>
+		{% endfor %}
+		</ul>
+	</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>{{hero.hname}}</h1>
+    <hr color="red"/>
+    <ul>
+    {% for skin in hero.skininfo_set.all %}
+        <li>{{skin.sname}}:{{skin.scontent}}</li>
+    {% endfor %}
+    </ul>
+    <hr>
+    <img src="/static/media/{{hero.hpicture}}" width="300">
+    <hr>
+    <h3>上传文件</h3>
+    <form method="post" action="/kingapp/upload/" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="hid" value="{{hero.id}}">
+        <input type="file" name="picture"/>
+        <input type="submit" value="提交">
+    </form>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>英雄列表</title>
+</head>
+<body>
+    <h1>英雄列表</h1>
+    <hr color="grey">
+    <table>
+        <tr>
+            <th>序号</th>
+            <th>名称</th>
+            <th>性别</th>
+            <th>发布日期</th>
+            <th>使用人数</th>
+            <th>购买价格</th>
+            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+        </tr>
+        {% for hero in herolist %}
+        <tr>
+            <td>hero.id</td>
+            <td>hero.name</td>
+            <td>hero.gender</td>
+            <td>hero.date</td>
+            <td>hero.user_num</td>
+            <td><a href="/HeroDesc/{{ hero.id }}"></a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <hr>
+    <h2>增加英雄</h2>
+    <form action="/heroInsert/" method="post">
+        <span>
+
+            <label for="name">名称：</label>
+            <input name="name" id="name">
+            <label for="gender">性别：</label>
+            <input name="gender" id="gender">
+            <label for="user_num">使用人数</label>
+            <input name="user_num" id="user_num">
+            <button type="submit">确认增加</button>
+        </span>
+    </form>
+
+</body>
+</html>

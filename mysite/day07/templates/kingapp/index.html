@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+</head>
+<body>
+    <h1>英雄列表</h1>
+    <hr>
+    <ul>
+        {% for hero in herolist %}}
+        {% if forloop.counter|divisibleby:"2" %}
+        <li style="background-color: red">{{forloop.counter}}|{{hero.hname}}|{{hero.hlaunch_date}}</li>
+        {% else %}
+        <li style="background-color: blue">{{forloop.counter}}|{{hero.hname}}|{{hero.hlaunch_date}}</li>
+        {% endif %}
+        {% empty %}
+        <li><h4>列表里没有英雄</h4></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

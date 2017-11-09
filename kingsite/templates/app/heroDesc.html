@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>英雄介绍</title>
+    <style>
+        div {
+            display:block;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center">英雄介绍</h1>
+    {% comment %}判断用户是否登录{% endcomment %}
+    {% if request.session.user_id %}
+        <h4><a href="#">{{ request.session.user_name }}</a></h4>
+    {% else %}
+        <h4><a href="#" target="_blank">登录</a>
+            <a href="#" target="_blank">注册</a></h4>
+    {% endif %}
+    <hr color="blue">
+    <div>
+        <div style="float: left; margin: 40px;line-height: 0;
+                        text-align: center">
+            <h2>{{ heroDesc.name }}</h2>
+            <img src="{{ heroDesc.picture }}" width="350px" height="400px">
+            {% if heroDesc.herohad == 0 %}
+            <a href="/#/{{ heroDesc.id }}/hero/" target="_blank"><h4>购买</h4></a>
+            <a href="/#/{{ heroDesc.id }}/hero/" target="_blank"><h4>加入购物车</h4></a>
+            {% endif %}
+        </div>
+        <div style="clear: both;"></div>
+        <h5>{{ heroDesc.desc }}</h5>
+    </div>
+    {% for skin in skinlist %}
+    <div style="float: left; margin: 40px;line-height: 0;
+                        text-align: center">
+        <img src="{{ skin.picture }}" width="350px" height="400px">
+        <h4>{{ skin.name }}</h4>
+        {% if skin.skinhad == 0 %}
+            <a href="/#/{{ skin.id }}/skin/" target="_blank"><h4>购买</h4></a>
+            <a href="/#/{{ skin.id }}/skin/" target="_blank"><h4>加入购物车</h4></a>
+        {% endif %}
+    {% endfor %}
+    </div>
+</body>
+</html>

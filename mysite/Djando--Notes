@@ -1,0 +1,116 @@
+Djando--Notes
+
+关于模板导入
+	1.在应用下创建模板文件夹，放入模板文件
+	2.在settings中加入模板路径
+	3.在views中导入模板文件
+			1.from django.template import loader
+			2.使用loader在请求下加载
+					e.g. tmp = loader.get_template('app/index.html')
+						 response = tmp.render()
+						 return HttpResponse(response)
+数据库导入
+	1.from models import *
+	2.获取数据对象的内容
+			e.g. herolist = HeroInfo.objects.all()  # 返回数据列表
+			     context = {'herolist': herolist}	# 创建一个字典
+			     response = tmp.render(context)		# 提交数据
+			     return HttpResponse(response)
+
+模板对数据的渲染
+	在views以字典形式提交数据后，模版会自动在字典中寻找对应的键并取出其中的值
+	e.g. {% for hero in herolist %}
+		<li>
+		{{ hero.id }} : {{ hero.hname }}
+		</li>
+		{% endfor %}
+
+在模板中通过外键访问其它数据
+	e.g.  hero.skininfo_set.all  通过hero键获取skininfo中所有的数据
+
+
+
+!! 这一条不一定存在   isDelete 重要文件可以设置此值，删除时不会直接删除
+		e.g.  isDelete = models.BooleanField(default=False)
+
+
+字段类型
+		CharField(max_length=size)
+		
+		TextField: 大文本字段，默认的表单控件为Textarea
+		
+		IntegerField： 整数
+		
+		DecimalField(max_digits=None, decimal_places=None, **options)
+		
+		DateField(auto_now=False, auto_now_add=False, **options)
+				DateField.auto_now
+						每次保存对象时，自动设置该字段为当前时间。 用于"最后一次修改"的时间戳。
+				DateField.auto_now_add
+						当对象第一次被创建时自动设置当前时间。
+				注意这两个参数互斥
+		
+		DateTimeField(auto_now=False, auto_now_add=False, **options)
+
+		。。。。。。
+
+
+
+字段选项
+		详细信息查询文档，模型字段参考	
+
+		null
+	    Field.null
+	    如果为True，Django将在数据库中将空值存储为NULL。 默认值是 False。
+        
+        blank
+        Field.blank
+        如果为True，则该字段允许为空白。 默认值是 False。
+
+        choices
+        Field.choices
+        它是一个可迭代的结构(比如，列表或是元组)，由可迭代的二元组组成(比如[(A, B), (A, B) ...])用来给这个字段提供选择项。 如果设置了choices，默认表格样式就会显示选择框，而不是标准的文本框，而且这个选择框的选项就是 choices 中的元组。
+
+        db_column
+		Field.db_column
+		数据库中用来表示该字段的列名称。 如果未指定，那么Django将会使用字段名作为列名.
+
+		db_index
+		Field.db_index
+		如果True，将为该字段创建一个数据库索引。
+		
+		db_tablespace
+		Field.db_tablespace
+		如果该字段有索引的话，数据库database tablespace的名称将作为该字段的索引名。
+
+		default
+		Field.default
+		该字段的默认值. 
+
+		editable
+		Field.editable
+		如果设为False, 这个字段将不会出现在 admin 或者其他 ModelForm. 模型验证也会跳过它们. 默认是True.
+		
+		error_messages
+		Field.error_messages
+		error_messages 参数能够让你重写抛出的默认错误信息。 
+		        
+		help_text
+		Field.help_text
+		额外的 ‘help' 文本将被显示在表单控件form中。
+        
+		primary_key
+		Field.primary
+		若为 True, 则该字段会成为模型的主键字段。
+		Django默认自动设置主键，非主动覆盖主键设置，不需要赋值True
+		e.g.  id = models.AutoField(primary_key=True)
+
+		unique
+ 		Field.unique
+ 		如果为 True, 这个字段在表中必须有唯一值.
+
+ 		。。。。。。
+
+
+
+覆写models.Manager()类可以管理数据

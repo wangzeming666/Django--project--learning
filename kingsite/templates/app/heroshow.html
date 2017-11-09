@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>英雄表</title>
+    <style type="text/css">
+{% comment %}div.container
+{
+width:100%;
+margin:0;
+border:1px solid gray;
+line-height:150%;
+}{% endcomment %}
+div.header,div.footer
+{
+padding:0.5em;
+color:white;
+background-color:gray;
+clear:left;
+}{% comment %}
+h1.header
+{
+padding:0;
+margin:0;
+}
+div.left
+{
+float:left;
+width:100px;
+height: 2000px;
+margin:0;
+padding:1em;{% endcomment %}
+{% comment %}{% endcomment %}}
+{% comment %}div.content
+{
+margin-left:190px;
+border-left:1px solid gray;
+padding:1em;
+}{% endcomment %}
+</style>
+    {% load static %}
+</head>
+<body style="background-color: gray">
+        <div class="container">
+        <div class="header"><h1 style="text-align: center">英雄列表</h1>
+        <div class="footer">
+        <div class="left">
+    {% for i in herolist %}
+        <div style="float: left; margin: 40px;line-height: 0;
+                        text-align: center">
+        <a href="/app/heroDesc/{{ i.id }}/">
+            <img src="{% static i.picture  %}" width="350px" height="400px">
+        </a>
+        <h4 >{{ i.name }}</h4>
+        </div>
+    {% endfor %}
+        </div>
+        </div>
+        </div>
+        </div>
+</body>
+</html>

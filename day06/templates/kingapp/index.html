@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>商品列表</title>
+</head>
+<body>
+    欢迎:{{user.uname}}<br>
+    {#这是单行注释，下面是多行注释 #}
+    {% comment %}
+    调用方法:{{user.getname}}<br>
+    {#不能调用有参数的方法,以下代码无结果#}
+    调用有参的方法:{{user.showme}}<br>
+    访问list:{{products}}:{{products.0}}:{{products.1}}
+    {% endcomment %}
+    <h1>商品列表</h1>
+    <hr color="red">
+    <ul>
+        <li>
+            <a href="/product/1">AK47</a>
+        </li>
+        <li>
+            <a href="/product/2">东风41</a>
+        </li>
+        <li>
+            <a href="/product/3">东风50</a>
+        </li>
+
+    </ul>
+</body>
+</html>

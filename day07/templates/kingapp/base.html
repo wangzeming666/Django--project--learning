@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <h1>logo</h1>
+    <br>
+    {% block content1 %}
+        <h2>这是默认的内容</h2>
+    {% endblock content1 %}
+    <br>
+
+    {% autoescape off %}
+    {% block content2%}
+    {% endblock content2 %}
+    {% endautoescape %}
+
+    <h3>每个页面的结束都是这样</h3>
+    <h4>{{uname}}:批准字号:100111</h4>
+</body>
+</html>

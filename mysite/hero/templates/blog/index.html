@@ -1,0 +1,15 @@
+<!--index.html-->
+<html>
+	<head>
+		<title>index</title>
+	</head>
+	<body>
+		<h1 style="margin-left: 20px;">Hero List</h1>
+		<hr/>
+		{% for hero in herolist %}
+		<li style="list-style-type: none; margin-left: 20px;">
+		<a href="{{ hero.id }}"> <h4>{{ hero.hname }} </h4> </a>
+		</li>
+		{% endfor %}
+	</body>
+</html>

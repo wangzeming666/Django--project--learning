@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>测试验证码</h1>
+    <hr color="red">
+    <form method="post" action="/kingapp/login_handle/">
+        {% csrf_token %}
+        用户名:<input type="text" name="uname"/><br>
+        <img src="/kingapp/verifyCode/"><br>
+        验证码:<input type="text" name="code"/>
+        <input type="submit" value="提交">
+    </form>
+</body>
+</html>
+

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <form method="post" action="/app/heroSkin/" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="skin">皮肤名：</label>
+        <input type="hidden" name="id" value="{{ heroDesc.id }}">
+        <input name="skin" id="skin">
+        <label for="intru">介绍</label>
+        <input name="desc" id="intru">
+        <label for="pic">上传图片</label>
+        <input type="file" name="picture" id="pic">
+        <button type="submit">添加皮肤</button>
+    </form>
+</body>
+</html>

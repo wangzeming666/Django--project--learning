@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>用户列表</h1>
+    <hr color="red">
+    <ul>
+        {% for user in userlist%}
+        <li>{{forloop.counter}}:{{user.uname}}</li>
+        {% empty %}
+            <h3>啥也没有</h3>
+        {% endfor %}
+    </ul>
+
+{% include 'kingapp/other.html' %}
+
+
+
+
+
+
+
+
+</body>
+</html>

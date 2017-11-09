@@ -1,0 +1,9 @@
+{% extends 'kingapp/base.html' %}
+{% block content1 %}
+<table border="1">
+    <tr>
+        <td width="300"><a href="/kingapp/usercenter">用户中心</a><br><a href="/kingapp/userinfo">详细信息</a></td>
+        <td>{% block user_content %}{% endblock%}</td>
+    </tr>
+</table>
+{% endblock content1 %}

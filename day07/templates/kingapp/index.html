@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>英雄列表</h1>
+    <hr color="red">
+    <ul>
+        {% for hero in herolist %}
+        {% if forloop.counter|divisibleby:"2" %}
+        <li style="color:red"><h3>{{forloop.counter}}|{{hero.hname}}|{{hero.hlaunch_date}}|{{hero.hnumber_people}}</h3></li>
+        {% elif forloop.counter|divisibleby:"3" %}
+        <li style="color:green"><h3>{{forloop.counter}}|{{hero.hname}}|{{hero.hlaunch_date}}|{{hero.hnumber_people}}</h3></li>
+        {% else %}
+        <li style="color:blue"><h3>{{forloop.counter}}|{{hero.hname}}|{{hero.hlaunch_date}}|{{hero.hnumber_people}}</h3></li>
+        {% endif %}
+        {% empty %}
+        <li><h3>没有数据需要显示</h3></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
